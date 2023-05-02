@@ -2,91 +2,72 @@ import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import fetchTheme from "./components/theme";
 import Web3 from "web3";
+import { fetchLidoApr } from "./components/fetchLidoApr";
+import { fetchLidoAbi } from "./components/fetchLidoAbi";
+import { getStakedBalance } from "./components/getStakedBalance";
+import { fetchTxCost } from "./components/fetchTxCost";
 
 const Lido = () => {
   const lidoContract = "0xae7ab96520de3a18e5e111b5eaab095312d7fe84";
   const tokenDecimals = 18;
 
   const [state, setState] = useState({
-    lidoArp: "10",
+    lidoApr: "-",
     sender: null,
     balance: null,
     stakedBalance: null,
     txCost: null,
     strEther: null,
     iface: null,
+    lidoAbi: null,
   });
   const [Theme, setTheme] = useState(null);
 
   // HELPER FUNCTIONS
-  const getStakedBalance = (web3, receiver) => {
-    const encodedData = state.iface.encodeFunctionData("balanceOf", [receiver]);
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    return provider
-      .call({
-        to: lidoContract,
-        data: encodedData,
-      })
-      .then((rawBalance) => {
-        const receiverBalanceHex = state.iface.decodeFunctionResult("balanceOf", rawBalance);
-        const balanceWei = web3.utils.toBN(receiverBalanceHex.toString());
-        const tokenDecimals = 18; // Replace with the actual number of decimals for your token
-        const balanceReadable = web3.utils.fromWei(balanceWei, "ether"); // Convert from Wei to Ether
-
-        // Format the balance as a string with commas and 2 decimal places
-        const balanceFormatted = Number(balanceReadable)
-          .toFixed(2)
-          .replace(/\d(?=(\d{3})+\.)/g, "$&,");
-
-        console.log(balanceFormatted); // Outputs the formatted balance string
-        return balanceFormatted;
-      });
-  };
-
-  const submitEthers = (strEther, _referral) => {
+  const submitEthers = async (strEther, _referral) => {
+    const web3 = new Web3(window.ethereum);
     if (!strEther) {
       return console.log("Amount is missing");
     }
-    const erc20 = new ethers.Contract(lidoContract, lidoAbi.body, Ethers.provider().getSigner());
+    const provider = new ethers.BrowserProvider(window.ethereum);
 
-    let amount = ethers.utils.parseUnits(strEther, tokenDecimals).toHexString();
+    const erc20 = new ethers.Contract(lidoContract, state.lidoAbi, provider.getSigner());
+    const lido = new web3.eth.Contract(state.lidoAbi, lidoContract);
 
-    erc20.submit(lidoContract, { value: amount }).then((transactionHash) => {
-      console.log("transactionHash is " + transactionHash);
+    let amount = web3.utils.toBN(strEther * 10 ** 18);
+    console.log(amount);
+
+    console.log(lido);
+
+    const sendEth = await web3.eth.sendTransaction({
+      from: state.sender,
+      to: lidoContract,
+      value: amount,
     });
+    console.log(sendEth);
   };
 
   useEffect(() => {
     const web3 = new Web3(window.ethereum);
-    // FETCH LIDO ABI
-    const fetchLidoAbi = async () => {
-      const response = await fetch("https://raw.githubusercontent.com/lidofinance/lido-subgraph/master/abis/Lido.json");
-      if (!response.ok) {
-        return "Loading";
-      }
-      const lidoAbi = await response.json();
-      console.log(lidoAbi);
-      const iface = new ethers.Interface(lidoAbi);
-      console.log(iface);
-      setState((prevState) => ({ ...prevState, iface: iface }));
-    };
-    if (state.iface === null) {
-      fetchLidoAbi();
-    }
-    // fetchLidoAbi();
 
-    // // FETCH LIDO STAKING APR
-    // const fetchLidoApr = async () => {
-    //   if (state.lidoArp === null) {
-    //     const response = await fetch("https://api.allorigins.win/get?url=https://stake.lido.fi/api/sma-steth-apr");
-    //     console.log(response);
-    //     if (!response.ok) return;
-    //     const apr = JSON.parse(response?.body?.contents) ?? "...";
-    //     setState((prevState) => ({ ...prevState, lidoArp: apr }));
-    //   }
+    // FETCH LIDO ABI
+    const getLidoAbi = async () => {
+      const res = await fetchLidoAbi();
+      const iface = new ethers.Interface(res);
+      setState((prevState) => ({ ...prevState, iface: iface, lidoAbi: res }));
+    };
+
+    if (!state.iface) {
+      getLidoAbi();
+    }
+
+    // const getLidoApr = async () => {
+    //   const res = await fetchLidoApr();
+    //   setState((prevState) => ({ ...prevState, lidoApr: res }));
     // };
-    // if (state.lidoArp === null) {
-    //   fetchLidoApr();
+
+    // if (!state.lidoApr) {
+    //   getLidoApr();
     // }
 
     // DETECT SENDER
@@ -96,7 +77,9 @@ const Lido = () => {
         setState((prevState) => ({ ...prevState, sender: sender[0] }));
       }
     };
-    getSender();
+    if (!state.sender) {
+      getSender();
+    }
 
     // FETCH SENDER BALANCE
     const fetchSenderBalance = async () => {
@@ -112,12 +95,14 @@ const Lido = () => {
         }
       }
     };
-    fetchSenderBalance();
+    if (!state.balance) {
+      fetchSenderBalance();
+    }
 
     // FETCH SENDER STETH BALANCE
     const fetchSenderStakedBalance = async () => {
-      if (!state.stakedBalance && !state.iface && !state.sender) {
-        const stakedBalance = await getStakedBalance(web3, state.sender);
+      if (!state.stakedBalance && state.iface && state.sender) {
+        const stakedBalance = await getStakedBalance(web3, state);
         setState((prevState) => ({ ...prevState, stakedBalance }));
       }
     };
@@ -126,41 +111,15 @@ const Lido = () => {
     }
 
     // FETCH TX COST
-    const fetchTxCost = async () => {
-      if (!state.txCost) {
-        const gasEstimate = web3.utils.toBN(1875000);
-        const gasPrice = web3.utils.toBN(1500000000);
-
-        const gasCostInWei = gasEstimate.mul(gasPrice);
-        const gasCostInEth = web3.utils.fromWei(gasCostInWei.toString(), "ether");
-
-        let responseGql = await fetch("https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: `{
-            bundle(id: "1" ) {
-              ethPrice
-            }
-          }`,
-          }),
-        });
-
-        if (!responseGql.ok) return "";
-
-        console.log(responseGql.body.data);
-        const ethPriceInUsd = responseGql.body.data.bundle.ethPrice;
-
-        const txCost = Number(gasCostInEth) * Number(ethPriceInUsd);
-
-        setState((prevState) => ({ ...prevState, txCost }));
-      }
+    const getTxCost = async () => {
+      const res = await fetchTxCost(web3);
+      setState((prevState) => ({ ...prevState, txCost: res }));
     };
-    // if (!state.txCost) {
-    //   fetchTxCost();
-    // }
+    if (!state.txCost) {
+      getTxCost();
+    }
     console.log(state);
-  }, [state.iface, state.lidoArp, state.sender, state.balance, state.stakedBalance]);
+  }, [state.iface, state.lidoApr, state.sender, state.balance, state.stakedBalance]);
 
   useEffect(() => {
     const fetchStyledComponent = async () => {
@@ -171,7 +130,7 @@ const Lido = () => {
     fetchStyledComponent();
   }, []);
 
-  if (!Theme || !state.iface || !state.lidoArp || !state.sender || !state.balance) {
+  if (!Theme || !state.iface || !state.lidoApr || !state.sender || !state.balance) {
     return <div>Loading...</div>;
   }
 
@@ -220,7 +179,7 @@ const Lido = () => {
             <div className="LidoFormTopContainerRight">
               <div className="LidoAprContainer">
                 <div className="LidoAprTitle">Lido APR</div>
-                <div className="LidoAprValue">{state.lidoArp ?? "..."}%</div>
+                <div className="LidoAprValue">{state.lidoApr ?? "..."}%</div>
               </div>
             </div>
           </div>

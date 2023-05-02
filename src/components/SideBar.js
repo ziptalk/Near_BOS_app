@@ -61,18 +61,18 @@ function Sidebar() {
       textAlign="center"
     >
       <Box fontSize="lg" fontWeight="bold" marginBottom="4">
-        Crypto Lending Platforms
+        Defi lists
       </Box>
       <Box marginBottom="2">
-        <Link href="/lidoPage">
+        <Link href="/lido">
           <div>Lido</div>
         </Link>
       </Box>
       <Box marginBottom="2">
-        <a href="#">Aave</a>
+        <a href="#">Defi 2</a>
       </Box>
       <Box marginBottom="2">
-        <a href="#">MakerDAO</a>
+        <a href="#">Defi 3</a>
       </Box>
       <Box display="flex" justifyContent="center" marginTop="4" borderTop="1px solid" borderColor={useColorModeValue("gray.200", "gray.600")} paddingTop="4">
         <Box marginRight="4">

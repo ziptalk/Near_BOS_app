@@ -1,12 +1,13 @@
 import React from "react";
 import { Box, Flex, Link, Button, Text } from "@chakra-ui/react";
+import ConnectMetamaskModal from "./ConnectWalletModal";
 
 function Navbar() {
   return (
     <Box bg="white" color="black" boxShadow="md" padding="1.5rem">
       <Flex justifyContent="space-between">
         <Text fontSize="5xl" fontWeight="bold" mr={4}>
-          Defi Collector
+          BOS Defi Collector
         </Text>
         <Flex as="nav" align="center" justify="space-between" wrap="wrap" padding="1.5rem 0" borderColor="gray.300">
           <Box display={{ base: "block", md: "none" }} onClick={() => {}}>
@@ -29,9 +30,7 @@ function Navbar() {
           </Box>
 
           <Box display={{ base: "none", md: "flex" }} alignItems="center" justifyContent="flex-end" flexGrow={1}>
-            <Button colorScheme="teal" size="sm" _hover={{ backgroundColor: "teal.600" }}>
-              Connect Wallet
-            </Button>
+            <ConnectMetamaskModal />
           </Box>
         </Flex>
       </Flex>

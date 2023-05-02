@@ -8,7 +8,7 @@ export default function AboutPage() {
     <Flex direction="column" height="150vh" backgroundColor="#F0FFFF">
       <Navbar />
       <Sidebar />
-      <Contents component="about"></Contents>
+      <Contents component="contact"></Contents>
     </Flex>
   );
 }

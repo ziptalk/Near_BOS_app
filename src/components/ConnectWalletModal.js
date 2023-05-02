@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@chakra-ui/react";
 import Web3 from "web3";
 
@@ -20,21 +20,25 @@ const ConnectMetamaskModal = () => {
     }
   };
 
+  useEffect(() => {
+    setWeb3(new Web3(window.ethereum));
+  }, []);
+
   return (
     <>
-      <Button onClick={onOpen}>Connect Metamask</Button>
+      {!web3 ? <Button onClick={onOpen}>Connect Metamask</Button> : <Button onClick={onOpen}>Connected</Button>}
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay />
-        <ModalContent bg="rgba(0, 0, 0, 0.5)">
-          <ModalHeader>Connect Metamask Wallet</ModalHeader>
-          <ModalBody>
+        <ModalContent bg="rgba(0, 0, 0, 0.9)">
+          <ModalHeader color="white">Connect Metamask Wallet</ModalHeader>
+          <ModalBody color="white">
             {!web3 ? (
               <>
-                <p>To use this feature, you need to connect to your Metamask wallet.</p>
+                <p color="white">To use this feature, you need to connect to your Metamask wallet.</p>
                 <Button onClick={connectMetamask}>Connect Metamask</Button>
               </>
             ) : (
-              <p>Connected to Metamask wallet.</p>
+              <p color="white">Connected wallet.</p>
             )}
           </ModalBody>
           <ModalFooter>
