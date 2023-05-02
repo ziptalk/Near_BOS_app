@@ -13,7 +13,7 @@ Currently, the main function for Lido is being implemented.
 In addition to Lido, the project aims to integrate other popular DeFi platforms such as Uniswap, Compound, and Aave. The team also plans to add additional features such as portfolio tracking and yield farming tools to further enhance the user experience.
 
 ## Sample Image
-![image](https://user-images.githubusercontent.com/64398993/235559952-eaf1de64-0f94-4f31-aa60-46f2b70e0f4f.png)
+![image](https://user-images.githubusercontent.com/64398993/235580343-8ed51f7d-d7aa-4dca-9707-f8f488a15715.png)
 
 ## How to Start
 ```
