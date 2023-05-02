@@ -15,3 +15,8 @@ In addition to Lido, the project aims to integrate other popular DeFi platforms 
 ## Sample Image
 ![image](https://user-images.githubusercontent.com/64398993/235559952-eaf1de64-0f94-4f31-aa60-46f2b70e0f4f.png)
 
+## How to Start
+```
+npm i
+npm run dev
+```
